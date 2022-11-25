@@ -154,6 +154,9 @@ easyPrune <- function(model){
   return(prune(model, cp = model$cptable[which.min(model$cptable[ , "xerror"]), "CP"]))
 }
 
+## End of professor's codes.
+## Machine learning modeling begins.
+
 ###########################
 ### Random Forest Model ###
 ###########################
@@ -169,14 +172,8 @@ rf_pred = predict(rf, test)
 # A variable that increases in purity during the random selection process of the forest shall prove to be more important. 
 
 varImpPlot(rf) 
-
 # Evaluation of predictions:
-rf_pred_TF = rf_pred > highest_allowable_cutoff
-rf_sensitivity = sum(rf_pred_TF == TRUE & obs == TRUE)/sum(obs == TRUE)
-rf_precision = sum(rf_pred_TF == TRUE & obs == TRUE)/sum(rf_pred_TF == TRUE)
-rf_F_beta = ((1+beta^2)*(rf_sensitivity*rf_precision))/((beta^2)*rf_precision + rf_sensitivity)
-
-# Find the optimal F-value and cut-off probability
+## Find the optimal F-value and cut-off probability
 find_optimal_cutoff_for_highest_F <- function(predictions, beta){
   F_beta_set = data.frame(matrix(ncol = 2, nrow = 0))
   for (cutoff_p in seq(0,1, by = 0.0001)) {
@@ -192,11 +189,18 @@ find_optimal_cutoff_for_highest_F <- function(predictions, beta){
   optimal_cutoff_p = no_nan_F_set[no_nan_F_set$F_beta == max_F,"cutoff_p"]
   plot(F_beta_set)
   return(list(max_F = max_F, optimal_cutoff_p = optimal_cutoff_p))
-}
+} # returns highest F-beta score achievable and the associated cutoff probability
 
 rf_optimal_combination = find_optimal_cutoff_for_highest_F(predictions = rf_pred,beta = beta)
 rf_max_F = rf_optimal_combination$max_F
 rf_optimal_cutoff_p = rf_optimal_combination$optimal_cutoff_p
+
+## If the "optimal" cutoff probability associated with the highest F-beta score is above the highest allowable cutoff probability,
+## we have to retreat to the highest allowable cutoff probability.
+rf_pred_TF = rf_pred > highest_allowable_cutoff
+rf_sensitivity = sum(rf_pred_TF == TRUE & obs == TRUE)/sum(obs == TRUE)
+rf_precision = sum(rf_pred_TF == TRUE & obs == TRUE)/sum(rf_pred_TF == TRUE)
+rf_F_beta = ((1+beta^2)*(rf_sensitivity*rf_precision))/((beta^2)*rf_precision + rf_sensitivity)
   
 ##################################
 ### Logistics Regression Model ###
